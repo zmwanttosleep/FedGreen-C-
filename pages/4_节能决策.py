@@ -367,15 +367,32 @@ comparison_data = {
     "节能 (M kWh)": [249.34, 258.08, 238.12, 258.0, 675.0]
 }
 
-# ==================== 侧边栏 / 阈值参数面板 ====================
-st.sidebar.markdown("## 阈值参数面板")
-# 阈值调节 (根据数据范围调整)
-sleep_th = st.sidebar.slider("休眠阈值 (kWh)", min_value=0, max_value=50000, value=20000, step=1000)
-mig_th = st.sidebar.slider("迁移阈值 (kWh)", min_value=0, max_value=150000, value=80000, step=1000)
-# 滑动窗口大小调节
-window_size = st.sidebar.slider("滑动窗口大小", min_value=1, max_value=30, value=7, step=1)
-# 策略模式选择 - 放在数据加载之前
+# 策略模式选择
 strategy = st.sidebar.selectbox("策略模式", ["Phase1", "Phase2", "Phase3", "双模型集成", "三模型集成"])
+
+# 阈值参数
+if strategy == "三模型集成":
+    # 三模型集成：显示滑动窗口大小、更新间隔、低/高阈值百分位数（滑块样式）
+    window_size = st.sidebar.slider("滑动窗口大小", min_value=1, max_value=7, value=3, step=1)
+    st.sidebar.markdown(f"<div style='text-align: right; color: #00ff88;'>{window_size} 天</div>", unsafe_allow_html=True)
+    
+    update_interval = st.sidebar.slider("更新间隔", min_value=500, max_value=2000, value=1000, step=100)
+    st.sidebar.markdown(f"<div style='text-align: right; color: #00ff88;'>{update_interval} 个样本</div>", unsafe_allow_html=True)
+    
+    low_percentile = st.sidebar.slider("低阈值百分位数", min_value=10, max_value=30, value=20, step=5)
+    st.sidebar.markdown(f"<div style='text-align: right; color: #00ff88;'>{low_percentile}%</div>", unsafe_allow_html=True)
+    
+    high_percentile = st.sidebar.slider("高阈值百分位数", min_value=70, max_value=90, value=80, step=5)
+    st.sidebar.markdown(f"<div style='text-align: right; color: #00ff88;'>{high_percentile}%</div>", unsafe_allow_html=True)
+    
+    # 保存默认值供后续使用
+    sleep_th = 20000
+    mig_th = 80000
+else:
+    # 其他策略：显示可调节的滑块
+    sleep_th = st.sidebar.slider("休眠阈值 (kWh)", min_value=0, max_value=50000, value=20000, step=1000)
+    mig_th = st.sidebar.slider("迁移阈值 (kWh)", min_value=0, max_value=150000, value=80000, step=1000)
+    window_size = st.sidebar.slider("滑动窗口大小", min_value=1, max_value=30, value=7, step=1)
 
 # 根据策略模式加载对应的数据
 df_raw = load_data(strategy)
@@ -450,20 +467,21 @@ st.markdown("""
 }
 .tech-metric-label {
     color: #00ffcc;
-    font-size: 16px;
+    font-size: 28px;
+    font-weight: bold;
     margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 .tech-metric-value {
     color: #ffffff;
-    font-size: 36px;
+    font-size: 48px;
     font-weight: bold;
     text-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
 }
 .tech-metric-unit {
     color: #c0c0c0;
-    font-size: 14px;
+    font-size: 18px;
     margin-left: 4px;
 }
 </style>
@@ -1284,11 +1302,24 @@ with chart_col:
 
             fig_compare.update_layout(
             title=dict(
-                text=f"<b>能耗对比分析</b><br><sup style='color:#00ffcc'>选中日期节能: {total_saved:,.0f} kWh | 节能效率: {avg_efficiency:.1f}%</sup>",
-                font=dict(size=16, color='#00ffcc'),
+                text="<b>能耗对比分析</b>",
+                font=dict(size=18, color='#00ffcc'),
                 x=0.5,
                 xanchor='center'
             ),
+            annotations=[
+                dict(
+                    text=f"选中日期节能: {total_saved:,.0f} kWh | 节能效率: {avg_efficiency:.1f}%",
+                    xref="paper", yref="paper",
+                    x=0.5, y=-0.15,
+                    showarrow=False,
+                    font=dict(size=12, color='#00ffcc'),
+                    bgcolor='rgba(10, 10, 26, 0.8)',
+                    bordercolor='rgba(0, 255, 204, 0.3)',
+                    borderwidth=1,
+                    borderpad=6
+                )
+            ],
             xaxis=dict(
                 title=dict(text='时间', font=dict(color='#00ffcc')),
                 gridcolor='rgba(0, 255, 204, 0.1)',
@@ -1344,7 +1375,8 @@ with chart_col:
                 }
                 .tech-metric-label {
                     color: #00ffcc;
-                    font-size: 12px;
+                    font-size: 18px;
+                    font-weight: bold;
                     margin-bottom: 5px;
                 }
                 .tech-metric-value {

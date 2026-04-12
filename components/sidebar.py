@@ -1,38 +1,5 @@
 import streamlit as st
 
-# 菜单结构
-MENU_STRUCTURE = {
-    "联邦学习配置": [
-        "2节点基线",
-        "3节点扩展",
-        "7节点扩展",
-        "41节点全量",
-        "五节点1天窗口",
-        "五节点7天窗口"
-    ],
-    "特征工程": [
-        "双流模型",
-        "4G单独训练",
-        "5G单独训练",
-        "2节点粒度融合",
-        "41节点粒度融合"
-    ],
-    "策略模式": [
-        "Phase1",
-        "Phase2",
-        "Phase3",
-        "集成学习"
-    ],
-    "单节点优化": [
-        "单节点最佳",
-        "贝叶斯优化",
-        "自适应早停",
-        "阈值优化",
-        "新口径单独",
-        "旧口径单独"
-    ]
-}
-
 def init_session_state():
     """初始化session state"""
     if "selected_node" not in st.session_state:
@@ -47,44 +14,6 @@ def render_sidebar():
     init_session_state()
     
     with st.sidebar:
-        # 菜单渲染
-        for category, items in MENU_STRUCTURE.items():
-            # 展开状态
-            is_expanded = st.session_state.expanded_cats.get(category, False)
-            
-            # 类别按钮
-            cols = st.columns([6, 1])
-            with cols[0]:
-                icon = "▼" if is_expanded else "▶"
-                btn_type = "secondary" if is_expanded else "tertiary"
-                if st.button(
-                    f"{icon} {category}",
-                    key=f"cat_{category}",
-                    use_container_width=True,
-                    type=btn_type
-                ):
-                    st.session_state.expanded_cats[category] = not is_expanded
-                    st.rerun()
-            
-            # 子项列表
-            if is_expanded:
-                for item in items:
-                    item_key = f"{category}::{item}"
-                    is_selected = st.session_state.selected_config == item_key
-                    
-                    # 根据选中状态设置样式
-                    btn_type = "primary" if is_selected else "tertiary"
-                    prefix = "●" if is_selected else "○"
-                    
-                    if st.button(
-                        f"{prefix} {item}",
-                        key=f"item_{item_key}",
-                        use_container_width=True,
-                        type=btn_type
-                    ):
-                        st.session_state.selected_config = item_key
-                        st.rerun()
-        
         # 底部状态栏
         st.markdown('<hr style="border-color: rgba(0, 255, 136, 0.3); margin: 15px 0;">', unsafe_allow_html=True)
         if st.session_state.selected_config:
