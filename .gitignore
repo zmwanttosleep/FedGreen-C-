@@ -1,0 +1,14 @@
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 本地数据文件（如果不想上传大数据）
+# data/processed/*.pkl
+# data/raw/

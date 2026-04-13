@@ -15,15 +15,13 @@ st.set_page_config(page_title="联邦学习训练", layout="wide")
 # 渲染共享侧边栏
 render_sidebar()
 
-# ==================== 侧边栏 / 阈值参数面板 ====================
-st.sidebar.markdown("## 阈值参数面板")
-# 阈值调节 (根据数据范围调整)
-sleep_th = st.sidebar.slider("休眠阈值 (kWh)", min_value=0, max_value=50000, value=20000, step=1000)
-mig_th = st.sidebar.slider("迁移阈值 (kWh)", min_value=0, max_value=150000, value=80000, step=1000)
-# 滑动窗口大小调节
-window_size = st.sidebar.slider("滑动窗口大小", min_value=1, max_value=30, value=7, step=1)
 # 策略模式选择
 strategy = st.sidebar.selectbox("策略模式", ["Phase1", "Phase2", "Phase3", "双模型集成", "三模型集成"])
+
+# 阈值参数
+sleep_th = st.sidebar.slider("休眠阈值 (kWh)", min_value=0, max_value=50000, value=20000, step=1000)
+mig_th = st.sidebar.slider("迁移阈值 (kWh)", min_value=0, max_value=150000, value=80000, step=1000)
+window_size = st.sidebar.slider("滑动窗口大小", min_value=1, max_value=30, value=7, step=1)
 
 st.markdown("""
 <style>
@@ -466,7 +464,7 @@ for i in range(20):
 particle_html += '</div>'
 st.markdown(particle_html, unsafe_allow_html=True)
 
-st.title("联邦学习训练监控")
+st.title("核心算法训练")
 
 st.markdown("""
 <style>
