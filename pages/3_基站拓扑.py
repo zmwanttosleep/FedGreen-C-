@@ -23,17 +23,27 @@ render_sidebar()
 
 # 在侧边栏添加日期选择器和基站选择器
 with st.sidebar:
-    st.markdown("<hr style='border-color: rgba(0, 255, 136, 0.3); margin: 15px 0;'>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #00ff88; font-family: Orbitron, sans-serif; font-size: 14px; margin-bottom: 10px;'>📅 数据日期</div>", unsafe_allow_html=True)
+    # 从数据文件中读取所有可用日期
+    data_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "decision_results_7day_all_phase2.csv")
+    if os.path.exists(data_file_path):
+        df_dates = pd.read_csv(data_file_path, usecols=['date'])
+        available_dates_str = sorted(df_dates['date'].unique())
+        available_dates = [datetime.strptime(d, "%Y-%m-%d").date() for d in available_dates_str]
+        min_date = min(available_dates)
+        max_date = max(available_dates)
+        default_date = available_dates[0]
+    else:
+        # 默认日期范围
+        min_date = datetime(2024, 9, 27).date()
+        max_date = datetime(2024, 9, 29).date()
+        default_date = min_date
     
-    # 日期选择器 - 使用数据中可用的日期范围 (2024-09-27 到 2024-10-01)
-    available_dates = [datetime(2024, 9, 27), datetime(2024, 9, 28), datetime(2024, 9, 29), 
-                       datetime(2024, 9, 30), datetime(2024, 10, 1)]
-    selected_date = st.selectbox(
-        "选择日期",
-        options=available_dates,
-        format_func=lambda x: x.strftime("%Y-%m-%d"),
-        index=0,
+    # 日期选择器 - 与其他页面保持一致
+    selected_date = st.date_input(
+        "数据日期",
+        value=default_date,
+        min_value=min_date,
+        max_value=max_date,
         key="topo_date_selector"
     )
     
@@ -47,7 +57,7 @@ with st.sidebar:
     
     # 基站选择器
     st.markdown("<hr style='border-color: rgba(0, 255, 136, 0.3); margin: 15px 0;'>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #00ff88; font-family: Orbitron, sans-serif; font-size: 14px; margin-bottom: 10px;'>📡 基站选择</div>", unsafe_allow_html=True)
+    st.markdown("<div style='color: #00ff88; font-family: Orbitron, sans-serif; font-size: 14px; margin-bottom: 10px;'>基站选择</div>", unsafe_allow_html=True)
     
     # 获取所有可用的基站ID
     all_node_ids = [8001, 8002, 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010, 
@@ -492,7 +502,7 @@ if 'topo_current_hour' not in st.session_state:
 
 # 自动轮播：每1.5秒更新一次时段（与ECharts时间轴同步）
 # 使用占位符来强制刷新
-auto_play = st.checkbox("自动轮播", value=True, key="auto_play_checkbox")
+auto_play = st.checkbox("", value=True, key="auto_play_checkbox", label_visibility="collapsed")
 if auto_play:
     # 自动递增时段
     if 'last_update' not in st.session_state:

@@ -1287,33 +1287,44 @@ st.subheader("实验对比分析")
 # 数据量散点图
 col3, col4 = st.columns(2)
 with col3:
-    # 读取 node_metadata.csv
-    node_metadata_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "node_metadata.csv")
-    if os.path.exists(node_metadata_path):
+    # 读取 node_train_samples.csv 和 node_quality.csv
+    node_train_samples_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "node_train_samples.csv")
+    node_quality_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "processed", "node_quality.csv")
+    
+    if os.path.exists(node_train_samples_path) and os.path.exists(node_quality_path):
         try:
-            df_metadata = pd.read_csv(node_metadata_path)
-            # 列名适配：train_samples_x, train_samples_y, status
-            df_metadata = df_metadata.rename(columns={
-                "train_samples_x": "train_samples",
-                "train_samples_y": "val_loss"
-            })
+            # 读取训练样本数据
+            df_train_samples = pd.read_csv(node_train_samples_path)
+            # 读取验证损失数据
+            df_quality = pd.read_csv(node_quality_path)
+            
+            # 合并数据
+            df_merged = pd.merge(df_train_samples, df_quality[['node_id', 'val_loss']], on='node_id', how='inner')
             
             # 准备散点图数据
+            # 将MSE值大于0.05的设为异常值
             normal_data = []
             abnormal_data = []
-            for _, row in df_metadata.iterrows():
+            for _, row in df_merged.iterrows():
+                val_loss = float(row["val_loss"])
+                train_samples = int(row["train_samples"])
+                node_id = int(row["node_id"])
+                # 判定逻辑：MSE > 0.05 为异常
+                is_abnormal = val_loss > 0.05
+                
                 point = {
-                    "value": [int(row["train_samples"]), float(row["val_loss"])],
-                    "node_id": int(row["node_id"]),
+                    "value": [train_samples, val_loss],
+                    "node_id": node_id,
+                    "train_samples": train_samples,
                     "itemStyle": {
                         "shadowBlur": 20,
-                        "shadowColor": "#00ff88" if row["status"] == "normal" else "#ff0000"
+                        "shadowColor": "#ff0000" if is_abnormal else "#00ff88"
                     }
                 }
-                if row["status"] == "normal":
-                    normal_data.append(point)
-                else:
+                if is_abnormal:
                     abnormal_data.append(point)
+                else:
+                    normal_data.append(point)
             
             # ECharts 科技感散点图配置
             scatter_option = {
@@ -1335,8 +1346,14 @@ with col3:
                     "backgroundColor": "rgba(10, 10, 26, 0.95)",
                     "borderColor": "#00ff88",
                     "borderWidth": 1,
-                    "textStyle": {"color": "#e0e0e0", "fontSize": 15},
-                    "formatter": JsCode("function(params) { return '<strong>' + params.data.node_id + '</strong>'; }").js_code
+                    "textStyle": {"color": "#e0e0e0", "fontSize": 14},
+                    "formatter": JsCode("""function(params) {
+                        return '<div style="font-family:Orbitron;padding:8px;">' +
+                               '<div style="font-size:16px;font-weight:bold;color:#00ff88;margin-bottom:8px;">节点 ' + params.data.node_id + '</div>' +
+                               '<div style="font-size:13px;color:#c0c0c0;margin-bottom:5px;">训练样本数: <span style="color:#fff;font-weight:bold;">' + params.data.train_samples.toLocaleString() + '</span></div>' +
+                               '<div style="font-size:13px;color:#c0c0c0;">验证损失 (MSE): <span style="color:#fff;font-weight:bold;">' + params.data.value[1].toFixed(6) + '</span></div>' +
+                               '</div>';
+                    }""").js_code
                 },
                 "grid": {"left": "10%", "right": "10%", "bottom": "15%", "top": "20%", "containLabel": True},
                 "xAxis": {
@@ -1435,9 +1452,14 @@ with col3:
 
                     
         except Exception as e:
-            st.error(f"读取 node_metadata.csv 失败: {e}")
+            st.error(f"读取数据文件失败: {e}")
     else:
-        st.warning("未找到 data/node_metadata.csv 文件，请运行合并脚本生成该文件。")
+        missing_files = []
+        if not os.path.exists(node_train_samples_path):
+            missing_files.append("data/node_train_samples.csv")
+        if not os.path.exists(node_quality_path):
+            missing_files.append("data/processed/node_quality.csv")
+        st.warning(f"未找到以下文件: {', '.join(missing_files)}")
 
 @st.cache_data
 def load_ablation_data():
